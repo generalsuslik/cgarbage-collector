@@ -1,17 +1,6 @@
-#include <assert.h>
-#include <unistd>
+#include "alloc.h"
 
-/*
- * struct representing 
- * block of bytes in memory
- * ... i guess
- */
-struct block_meta {
-	size_t size;
-	struct block_meta *next;
-	int    free;
-};
-
+#define BLOCK_SIZE 4096
 #define META_SIZE sizeof(struct block_meta)
 
 void *global_base = NULL;
@@ -41,15 +30,13 @@ struct block_meta *request_space(struct block_meta *last, size_t size)
 {
 	struct block_meta *block;
 	block = sbrk(0); // used to find the current location of program break (end of process's data segment)
-	void *request = sbrk(size + META_SIZE);
+	void *request = sbrk(size + META_SIZE); // increments process's data segment by size + META_SIZE bytes
 	assert((void *)block == request);
-	if (request == (void *) -1) 
-	{
+	if (request == (void *) -1) {
 		return NULL;
 	}
 
-	if (last)
-	{
+	if (last) {
 		last->next = block;
 	}
 
@@ -59,7 +46,10 @@ struct block_meta *request_space(struct block_meta *last, size_t size)
 	return block;
 }
 
-void m_alloc(size_t size) 
+/*
+ * malloc clone
+ */
+void *m_alloc(size_t size) 
 {
 	struct block_meta *block;
 
@@ -81,7 +71,7 @@ void m_alloc(size_t size)
 			if (!block) {
 				return NULL;
 			}
-		} else {
+		} else {	
 			block->free = 0;
 		}
 	}
