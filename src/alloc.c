@@ -1,7 +1,5 @@
+#include <stdio.h>
 #include "alloc.h"
-
-#define BLOCK_SIZE 4096
-#define META_SIZE sizeof(struct block_meta)
 
 void *global_base = NULL;
 
@@ -12,8 +10,7 @@ void *global_base = NULL;
 struct block_meta *find_free_block(struct block_meta **last, size_t size) 
 {
 	struct block_meta *curr = global_base;
-	while (curr && !(curr->free && curr->size >= size)) 
-	{
+	while (curr && curr->size < size) {
 		*last = curr;
 		curr = curr->next;
 	}
@@ -39,10 +36,9 @@ struct block_meta *request_space(struct block_meta *last, size_t size)
 	if (last) {
 		last->next = block;
 	}
-
+	
 	block->size = size;
 	block->next = NULL;
-	block->free = 0;
 	return block;
 }
 
@@ -53,7 +49,7 @@ void *m_alloc(size_t size)
 {
 	struct block_meta *block;
 
-	if (size <= 0) {
+	if (size < 0) {
 		return NULL;
 	}
 
@@ -71,59 +67,25 @@ void *m_alloc(size_t size)
 			if (!block) {
 				return NULL;
 			}
-		} else {	
-			block->free = 0;
 		}
 	}
 
 	return block + 1;
 }
 
-struct block_meta *get_block_ptr(void *ptr) 
-{
-	return (struct block_meta *)ptr - 1;
-}
-
 void m_free(void *ptr) 
 {
-	if (!ptr) {
-		return;
-	}
 
-	struct block_meta *block_ptr = get_block_ptr(ptr);
-	assert(block_ptr->free == 0);
-	block_ptr->free = 1;
 }
 
-void *m_realloc(void *ptr, size_t size)
+void print_blocks() 
 {
-	if (!ptr) {
-		return m_alloc(size);
+	struct block_meta *curr = global_base;
+	while (curr) {
+		printf("%p, %zu\n", curr, curr->size);
+		curr = curr->next;
 	}
 
-	struct block_meta *block_ptr = get_block_ptr(ptr);
-	if (block_ptr->size >= size) {
-		// we have enough space
-		return ptr;
-	}
-	
-	// here the real reallocation comes
-	void *new_ptr;
-	new_ptr = m_alloc(size);
-	if (!new_ptr) {
-		return NULL;
-	}
-	
-	memcpy(new_ptr, ptr, block_ptr->size);
-	m_free(ptr);
-	return new_ptr;
-}
-
-void *m_calloc(size_t nelem, size_t elsize) 
-{
-	size_t size = nelem * elsize;
-	void *ptr = m_alloc(size);
-	memset(ptr, 0, size);
-	return ptr;
+	printf("done\n");
 }
 

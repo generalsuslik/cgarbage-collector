@@ -1,44 +1,25 @@
 #include <stdio.h>
-#include <stdlib.h>
-
 #include "alloc.h"
 
-struct test {
-	int *arr;	
-};
+int main()
+{	
+	printf("META SIZE hex: %lx\n", META_SIZE);
 
-int main(int argc, char **argv) 
-{
-	printf("\nIn main\n\n");
+	int *p = m_alloc(sizeof(int));
+	*p = 1;
 
-	int len = 20;
-	char *arr = (char *)m_calloc(len, sizeof(char));
-	if (arr == NULL) {
-		printf("ERR\n");
-		exit(EXIT_FAILURE);
-	}
+	int len = 26;
+	char *str = (char *)m_alloc(len * sizeof(char));
 
-	printf("DONE\n");
 	for (int i = 0; i < len; ++i) {
-		arr[i] = i + 'A';
+		str[i] = i + 'A';
 	}
 
-	m_free(arr);
-	printf("\narr freed\n");
+	printf("%p\n", str - 1);
 
-	arr = (char *)m_alloc(len * sizeof(char));
-	if (arr == NULL) {
-		printf("Error 2\n");
-		exit(EXIT_FAILURE);
-	}
-
-	printf("DONE2\n");
-	for (int i = len - 1; i >= 0; --i) {
-		arr[len - i - 1] = i + 'A';
-	}
-
-	m_free(arr);
-	printf("\narr2 freed\n");
+	print_blocks();
+	char *s = (char *)(p + 1 + META_SIZE);
+	printf("%s\n", s);
 
 	return 0;	
 }
